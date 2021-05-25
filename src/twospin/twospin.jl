@@ -9,6 +9,7 @@ using CSV
 using DataFrames
 using LinearAlgebra
 using Interpolations
+using Altro
 
 # paths
 const MM_OUT_PATH = abspath(joinpath(WDIR, "out", "mm"))
@@ -234,4 +235,190 @@ function target_states(gate_type)
         target_state4 = iSWAP_ISO_4
     end
     return (target_state1, target_state2, target_state3, target_state4)
+end
+
+@inline Base.size(model::AbstractModel) = model.n, model.m
+# vector and matrix constructors (use CPU arrays)
+@inline M(mat_) = mat_
+@inline Md(mat_) = mat_
+@inline V(vec_) = vec_
+
+function initialize_two_spin(model, gate_type, evolution_time, dt,
+                             time_optimal, qs, initial_pulse; deriv=false)
+    n, m = size(model)
+    t0 = 0.
+    dt_max = 2 * dt
+    dt_min = dt / 1e1
+    sqrt_dt_max = sqrt(dt_max)
+    sqrt_dt_min = sqrt(dt_min)
+
+    x0 = zeros(n)
+    x0[model.state1_idx] = TWOSPIN_ISO_1
+    x0[model.state2_idx] = TWOSPIN_ISO_2
+    x0[model.state3_idx] = TWOSPIN_ISO_3
+    x0[model.state4_idx] = TWOSPIN_ISO_4
+    x0 = V(x0)
+
+    # final state
+    (target_state1, target_state2,
+     target_state3, target_state4) = target_states(gate_type)
+    xf = zeros(n)
+    xf[model.state1_idx] = target_state1
+    xf[model.state2_idx] = target_state2
+    xf[model.state3_idx] = target_state3
+    xf[model.state4_idx] = target_state4
+    xf = V(xf)
+
+    # bound constraints
+    x_max = fill(Inf, n)
+    x_max_boundary = fill(Inf, n)
+    x_min = fill(-Inf, n)
+    x_min_boundary = fill(-Inf, n)
+    u_max = fill(Inf, m)
+    u_max_boundary = fill(Inf, m)
+    u_min = fill(-Inf, m)
+    u_min_boundary = fill(-Inf, m)
+    # constrain the control amplitudes
+    x_max[model.controls_idx[1]] = 0.5
+    x_min[model.controls_idx[1]] = -0.5
+    # control amplitudes go to zero at boundary
+    x_max_boundary[model.controls_idx] .= 0
+    x_min_boundary[model.controls_idx] .= 0
+    # constraint dt
+    if time_optimal
+        u_max[model.dt_idx] .= sqrt_dt_max
+        u_max_boundary[model.dt_idx] .= sqrt_dt_max
+        u_min[model.dt_idx] .= sqrt_dt_min
+        u_min_boundary[model.dt_idx] .= sqrt_dt_min
+    end
+    # vectorize
+    x_max = V(x_max)
+    x_max_boundary = V(x_max_boundary)
+    x_min = V(x_min)
+    x_min_boundary = V(x_min_boundary)
+    u_max = V(u_max)
+    u_max_boundary = V(u_max_boundary)
+    u_min = V(u_min)
+    u_min_boundary = V(u_min_boundary)
+
+    # initial trajectory
+    N = Int(floor(evolution_time / dt)) + 1
+    X0 = [V(zeros(n)) for k = 1:N]
+    X0[1] .= x0
+    if isnothing(initial_pulse)
+        U0 = [V([
+            fill(1e-4, 1);
+            fill(dt, time_optimal ? 1 : 0);
+        ]) for k = 1:N-1]
+        ts = V(zeros(N))
+        ts[1] = t0
+        for k = 1:N-1
+            ts[k + 1] = ts[k] + dt
+        end
+    else
+        U0_, ts = grab_controls(initial_pulse)
+        U0 = V(vec([[u0_elem] for u0_elem in U0_]))
+    end
+    for k = 1:N-1
+        discrete_dynamics!(X0[k + 1], EXP, model, X0[k], U0[k], ts[k], dt)
+    end
+
+    # cost function
+    Q = zeros(n)
+    Q[model.state1_idx] .= qs[1]
+    Q[model.state2_idx] .= qs[1]
+    Q[model.state3_idx] .= qs[1]
+    Q[model.state4_idx] .= qs[1]
+    Q[model.intcontrols_idx] .= qs[2]
+    Q[model.controls_idx] .= qs[3]
+    Q[model.dcontrols_idx] .= qs[4]
+    if deriv == true
+        Q[model.dstate1_idx] .= qs[5]
+    end
+    Q = Diagonal(V(Q))
+    Qf = Q .* N
+    # Qf = Q
+    R = zeros(m)
+    R[model.d2controls_idx] .= qs[6]
+    if time_optimal
+        R[model.dt_idx] .= qs[7]
+    end
+    R = Diagonal(V(R))
+    objective = LQRObjective(Q, Qf, R, xf, n, m, N, M, V)
+
+    # create constraints
+    control_amp = BoundConstraint(x_max, x_min, u_max, u_min, n, m, M, V)
+    control_amp_boundary = BoundConstraint(x_max_boundary, x_min_boundary,
+                                           u_max_boundary, u_min_boundary, n, m, M, V)
+    target_astate_constraint = GoalConstraint(xf, V([model.state1_idx; model.state2_idx;
+                                                     model.state3_idx; model.state4_idx;]),
+                                              n, m, M, V)
+    nidxs = [model.state1_idx, model.state2_idx,
+             model.state3_idx, model.state4_idx]
+    nc_states = [NormConstraint(EQUALITY, STATE, nidx,
+                                  1., n, m, M, V) for nidx in nidxs]
+    # add constraints
+    constraints = ConstraintList(n, m, N, M, V)
+    add_constraint!(constraints, control_amp, V(2:N-2))
+    add_constraint!(constraints, control_amp_boundary, V(N-1:N-1))
+    add_constraint!(constraints, target_astate_constraint, V(N:N))
+    for nc_state in nc_states
+        add_constraint!(constraints, nc_state, V(2:N-1))
+    end
+    return objective, constraints, X0, U0, ts, N
+end
+
+function post_process(solver, model, time_optimal, dt, ts, evolution_time, qs)
+    acontrols_raw = Altro.controls(solver)
+    acontrols_arr = permutedims(reduce(hcat, map(Array, acontrols_raw)), [2, 1])
+    astates_raw = Altro.states(solver)
+    astates_arr = permutedims(reduce(hcat, map(Array, astates_raw)), [2, 1])
+    state1_idx_arr = Array(model.state1_idx)
+    state2_idx_arr = Array(model.state2_idx)
+    state3_idx_arr = Array(model.state3_idx)
+    state4_idx_arr = Array(model.state4_idx)
+    controls_idx_arr = Array(model.controls_idx)
+    dcontrols_idx_arr = Array(model.dcontrols_idx)
+    d2controls_idx_arr = Array(model.d2controls_idx)
+    dt_idx_arr = Array(model.dt_idx)
+    max_v, max_v_info = Altro.max_violation_info(solver)
+    iterations_ = Altro.iterations(solver)
+    if time_optimal
+        ts = cumsum(map(x -> x^2, acontrols_arr[:,model.dt_idx[1]]))
+    end
+
+    result = Dict(
+        "acontrols" => acontrols_arr,
+        "astates" => astates_arr,
+        "dt" => dt,
+        "ts" => ts,
+        "state1_idx" => state1_idx_arr,
+        "state2_idx" => state2_idx_arr,
+        "state3_idx" => state3_idx_arr,
+        "state4_idx" => state4_idx_arr,
+        "controls_idx" => controls_idx_arr,
+        "dcontrols_idx" => dcontrols_idx_arr,
+        "d2controls_idx" => d2controls_idx_arr,
+        "dt_idx" => dt_idx_arr,
+        "evolution_time" => evolution_time,
+        "max_v" => max_v,
+        "max_v_info" => max_v_info,
+        "qs" => qs,
+        "iterations" => iterations_,
+        "time_optimal" => Integer(time_optimal),
+        "hdim_iso" => HDIM_TWOSPIN_ISO,
+        "save_type" => Int(jl)
+    )
+    return result
+end
+
+function save_to_file!(result, EXPERIMENT_NAME, SAVE_PATH)
+    save_file_path = generate_file_path("h5", EXPERIMENT_NAME, SAVE_PATH)
+    println("Saving this optimization to $(save_file_path)")
+    h5open(save_file_path, "cw") do save_file
+        for key in keys(result)
+            write(save_file, key, result[key])
+        end
+    end
+    result["save_file_path"] = save_file_path
 end

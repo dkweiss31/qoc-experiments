@@ -5,7 +5,7 @@ qocexperiments.jl - A file for common things shared in this repository.
 # paths / venv
 WDIR = joinpath(@__DIR__, "../")
 import Pkg
-Pkg.activate(WDIR)
+# Pkg.activate(WDIR)
 
 # imports
 import Base
@@ -66,7 +66,7 @@ function generate_file_path(extension, file_name, path)
             end
         end
     end
-    
+
     file_path = joinpath(path, "$(lpad(max_numeric_prefix + 1, 5, '0'))_$(file_name).$(extension)")
     return file_path
 end
@@ -144,7 +144,7 @@ function plot_controls(save_file_paths, plot_file_path;
         if d2pi
             controls = controls ./ (2 * pi)
         end
-        
+
         # Plot.
         for j = 1:control_count
             label = isnothing(labels) ? nothing : labels[i][j]
