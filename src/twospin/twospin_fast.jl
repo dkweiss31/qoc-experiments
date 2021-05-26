@@ -93,7 +93,7 @@ function run_traj(;gate_type=iswap, evolution_time=50., dt=DT_PREF, verbose=true
     Hs = [M(H) for H in (NEGI_H0_TWOSPIN_ISO, NEGI_H1_TWOSPIN_ISO)]
     model = Model(M, Md, V, Hs, time_optimal)
     objective, constraints, X0, U0, ts, N = initialize_two_spin(model, gate_type, evolution_time, dt,
-                                                                time_optimal, qs, initial_pulse; deriv=false)
+                                                                time_optimal, qs, initial_pulse)
     # build problem
     prob = Problem(EXP, model, objective, constraints, X0, U0, ts, N, M, Md, V)
     opts = SolverOptions(

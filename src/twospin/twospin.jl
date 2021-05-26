@@ -244,7 +244,8 @@ end
 @inline V(vec_) = vec_
 
 function initialize_two_spin(model, gate_type, evolution_time, dt,
-                             time_optimal, qs, initial_pulse; deriv=false)
+                             time_optimal, qs, initial_pulse;
+                             deriv_H0=false, deriv_H1=false)
     n, m = size(model)
     t0 = 0.
     dt_max = 2 * dt
@@ -332,8 +333,11 @@ function initialize_two_spin(model, gate_type, evolution_time, dt,
     Q[model.intcontrols_idx] .= qs[2]
     Q[model.controls_idx] .= qs[3]
     Q[model.dcontrols_idx] .= qs[4]
-    if deriv == true
-        Q[model.dstate1_idx] .= qs[5]
+    if deriv_H0 == true
+        Q[model.dstate1_H0_idx] .= qs[5]
+    end
+    if deriv_H1 == true
+        Q[model.dstate1_H1_idx] .= qs[5]
     end
     Q = Diagonal(V(Q))
     Qf = Q .* N

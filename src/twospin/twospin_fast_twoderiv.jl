@@ -1,5 +1,6 @@
 """
 twospin12.jl - two spin with derivative robustness to pulse
+               and also qubit frequencies
 """
 WDIR = abspath(@__DIR__, "../../")
 const EXPERIMENT_META = "twospin"
@@ -11,7 +12,7 @@ using LinearAlgebra
 using StaticArrays
 
 # paths
-const EXPERIMENT_NAME = "twospinfastderivpulse"
+const EXPERIMENT_NAME = "twospinfasttwoderiv"
 const SAVE_PATH = abspath(joinpath(WDIR, "out", EXPERIMENT_META, EXPERIMENT_NAME))
 
 struct Model{TH,Tis,Tic,Tid} <: AbstractModel
@@ -29,7 +30,8 @@ struct Model{TH,Tis,Tic,Tid} <: AbstractModel
     intcontrols_idx::Tic
     controls_idx::Tic
     dcontrols_idx::Tic
-    dstate1_idx::Tis
+    dstate1_H0_idx::Tis
+    dstate1_H1_idx::Tis
     d2controls_idx::Tic
     dt_idx::Tid
 end
@@ -37,7 +39,7 @@ end
 function Model(M_, Md_, V_, Hs, time_optimal)
     # problem size
     control_count = 1
-    state_count = HDIM_TWOSPIN + 1 # one state derivative
+    state_count = HDIM_TWOSPIN + 2 # two state derivatives
     n = state_count * HDIM_TWOSPIN_ISO + 3 * control_count
     m = time_optimal ? control_count + 1 : control_count
     # state indices
@@ -48,7 +50,8 @@ function Model(M_, Md_, V_, Hs, time_optimal)
     intcontrols_idx = V(state4_idx[end] + 1:state4_idx[end] + control_count)
     controls_idx = V(intcontrols_idx[end] + 1:intcontrols_idx[end] + control_count)
     dcontrols_idx = V(controls_idx[end] + 1:controls_idx[end] + control_count)
-    dstate1_idx = V(dcontrols_idx[end] + 1:dcontrols_idx[end] + HDIM_TWOSPIN_ISO)
+    dstate1_H0_idx = V(dcontrols_idx[end] + 1:dcontrols_idx[end] + HDIM_TWOSPIN_ISO)
+    dstate1_H1_idx = V(dstate1_H0_idx[end] + 1:dstate1_H0_idx[end] + HDIM_TWOSPIN_ISO)
     # control indices
     d2controls_idx = V(1:control_count)
     dt_idx = V(d2controls_idx[end] + 1:d2controls_idx[end] + 1)
@@ -59,7 +62,8 @@ function Model(M_, Md_, V_, Hs, time_optimal)
     Tid = typeof(dt_idx)
     return Model{TH,Tis,Tic,Tid}(n, m, Hs, time_optimal, state1_idx, state2_idx,
                                  state3_idx, state4_idx, intcontrols_idx, controls_idx,
-                                 dcontrols_idx, dstate1_idx, d2controls_idx, dt_idx)
+                                 dcontrols_idx, dstate1_H0_idx, dstate1_H1_idx,
+                                 d2controls_idx, dt_idx)
 end
 
 # dynamics
@@ -81,10 +85,12 @@ function Altro.discrete_dynamics(::Type{EXP}, model::Model,
     intcontrols = astate[model.controls_idx] .* dt + astate[model.intcontrols_idx]
     controls = astate[model.dcontrols_idx] .* dt + astate[model.controls_idx]
     dcontrols = acontrol[model.d2controls_idx] .* dt + astate[model.dcontrols_idx]
-    dstate1_ = astate[model.dstate1_idx]
-    dstate1 = U * (dstate1_ + dt * model.Hs[1] * state1_)
+    dstate1_H0_ = astate[model.dstate1_H0_idx]
+    dstate1_H1_ = astate[model.dstate1_H1_idx]
+    dstate1_H0 = U * (dstate1_H0_ + dt * model.Hs[1] * state1_)
+    dstate1_H1 = U * (dstate1_H1_ + dt * model.Hs[2] * state1_)
     astate_ = [state1; state2; state3; state4;
-               intcontrols; controls; dcontrols; dstate1]
+               intcontrols; controls; dcontrols; dstate1_H0; dstate1_H1]
     return astate_
 end
 
@@ -99,8 +105,8 @@ function run_traj(;gate_type=iswap, evolution_time=50., dt=DT_PREF, verbose=true
     Hs = [M(H) for H in (NEGI_H0_TWOSPIN_ISO, NEGI_H1_TWOSPIN_ISO)]
     model = Model(M, Md, V, Hs, time_optimal)
     objective, constraints, X0, U0, ts, N = initialize_two_spin(model, gate_type, evolution_time, dt,
-                                                                time_optimal, qs, initial_pulse; deriv_H1=true)
-
+                                                                time_optimal, qs, initial_pulse;
+                                                                deriv_H0=true, deriv_H1=true)
     # build problem
     prob = Problem(EXP, model, objective, constraints, X0, U0, ts, N, M, Md, V)
     opts = SolverOptions(
