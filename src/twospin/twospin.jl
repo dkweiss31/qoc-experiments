@@ -43,6 +43,7 @@ gs_minus_spline_itp = extrapolate(interpolate((x_vals,), gs_minus_expect_vals,
     izpiby2 = 9
     cnot = 10
     iswap = 11
+    cphase = 12
 end
 
 # simulation constants
@@ -90,6 +91,10 @@ const iSWAP = [1    0    0 0;
                0    0 -1im 0;
                0 -1im    0 0;
                0    0    0 1]
+const CPHASE = [1 0 0 0;
+                0 1 0 0;
+                0 0 1 0;
+                0 0 0 -1]
 
 const XX_ISO = get_mat_iso(XX)
 const ZZ_ISO = get_mat_iso(ZZ)
@@ -99,6 +104,7 @@ const IX_ISO = get_mat_iso(IX)
 const XI_ISO = get_mat_iso(XI)
 const CNOT_ISO = get_mat_iso(CNOT)
 const iSWAP_ISO = get_mat_iso(iSWAP)
+const CPHASE_ISO = get_mat_iso(CPHASE)
 const NEGI_H0_TWOSPIN_ISO = get_mat_iso(-1im * WQ_1 * ZI / 2
                                         -1im * WQ_2 * IZ / 2)
 const NEGI_H1_TWOSPIN_ISO = get_mat_iso(-1im * 2π * XX)
@@ -146,6 +152,11 @@ const iSWAP_ISO_1 = get_vec_iso(iSWAP[:,1])
 const iSWAP_ISO_2 = get_vec_iso(iSWAP[:,2])
 const iSWAP_ISO_3 = get_vec_iso(iSWAP[:,3])
 const iSWAP_ISO_4 = get_vec_iso(iSWAP[:,4])
+
+const CPHASE_ISO_1 = get_vec_iso(iSWAP[:,1])
+const CPHASE_ISO_2 = get_vec_iso(iSWAP[:,2])
+const CPHASE_ISO_3 = get_vec_iso(iSWAP[:,3])
+const CPHASE_ISO_4 = get_vec_iso(iSWAP[:,4])
 
 const XIPIBY2_ISO_1 = get_vec_iso(XIPIBY2_[:,1])
 const XIPIBY2_ISO_2 = get_vec_iso(XIPIBY2_[:,2])
@@ -233,6 +244,11 @@ function target_states(gate_type)
         target_state2 = iSWAP_ISO_2
         target_state3 = iSWAP_ISO_3
         target_state4 = iSWAP_ISO_4
+    elseif gate_type == cphase
+        target_state1 = CPHASE_ISO_1
+        target_state2 = CPHASE_ISO_2
+        target_state3 = CPHASE_ISO_3
+        target_state4 = CPHASE_ISO_4
     end
     return (target_state1, target_state2, target_state3, target_state4)
 end

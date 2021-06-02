@@ -29,7 +29,7 @@ struct Model{TH,Tis,Tic,Tid} <: AbstractModel
     intcontrols_idx::Tic
     controls_idx::Tic
     dcontrols_idx::Tic
-    dstate1_idx::Tis
+    dstate1_H1_idx::Tis
     d2controls_idx::Tic
     dt_idx::Tid
 end
@@ -48,7 +48,7 @@ function Model(M_, Md_, V_, Hs, time_optimal)
     intcontrols_idx = V(state4_idx[end] + 1:state4_idx[end] + control_count)
     controls_idx = V(intcontrols_idx[end] + 1:intcontrols_idx[end] + control_count)
     dcontrols_idx = V(controls_idx[end] + 1:controls_idx[end] + control_count)
-    dstate1_idx = V(dcontrols_idx[end] + 1:dcontrols_idx[end] + HDIM_TWOSPIN_ISO)
+    dstate1_H1_idx = V(dcontrols_idx[end] + 1:dcontrols_idx[end] + HDIM_TWOSPIN_ISO)
     # control indices
     d2controls_idx = V(1:control_count)
     dt_idx = V(d2controls_idx[end] + 1:d2controls_idx[end] + 1)
@@ -59,7 +59,7 @@ function Model(M_, Md_, V_, Hs, time_optimal)
     Tid = typeof(dt_idx)
     return Model{TH,Tis,Tic,Tid}(n, m, Hs, time_optimal, state1_idx, state2_idx,
                                  state3_idx, state4_idx, intcontrols_idx, controls_idx,
-                                 dcontrols_idx, dstate1_idx, d2controls_idx, dt_idx)
+                                 dcontrols_idx, dstate1_H1_idx, d2controls_idx, dt_idx)
 end
 
 # dynamics
@@ -81,7 +81,7 @@ function Altro.discrete_dynamics(::Type{EXP}, model::Model,
     intcontrols = astate[model.controls_idx] .* dt + astate[model.intcontrols_idx]
     controls = astate[model.dcontrols_idx] .* dt + astate[model.controls_idx]
     dcontrols = acontrol[model.d2controls_idx] .* dt + astate[model.dcontrols_idx]
-    dstate1_ = astate[model.dstate1_idx]
+    dstate1_ = astate[model.dstate1_H1_idx]
     dstate1 = U * (dstate1_ + dt * model.Hs[1] * state1_)
     astate_ = [state1; state2; state3; state4;
                intcontrols; controls; dcontrols; dstate1]

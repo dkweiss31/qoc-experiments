@@ -70,7 +70,7 @@ function Altro.discrete_dynamics(::Type{EXP}, model::Model,
                               acontrol::AbstractVector, time::Real, dt_::Real)
     dt = !model.time_optimal ? dt_ : acontrol[model.dt_idx[1]]^2
     H = dt * (model.Hs[1] +
-              J_eff(astate[model.controls_idx[1]]) * model.Hs[2])
+              J_eff(astate[model.controls_idx[1]]+0.28) * model.Hs[2])
     U = exp(H)
     state1 = U * astate[model.state1_idx]
     state2 = U * astate[model.state2_idx]
