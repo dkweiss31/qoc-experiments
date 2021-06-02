@@ -29,6 +29,8 @@ chi_minus_spline_itp = extrapolate(interpolate((x_vals,), chi_minus_vals,
                                    Gridded(Linear())), Periodic())
 gs_minus_spline_itp = extrapolate(interpolate((x_vals,), gs_minus_expect_vals,
                                   Gridded(Linear())), Periodic())
+const ELa = 0.230
+const ELb = 0.268
 
 # types
 @enum GateType begin
@@ -108,6 +110,8 @@ const CPHASE_ISO = get_mat_iso(CPHASE)
 const NEGI_H0_TWOSPIN_ISO = get_mat_iso(-1im * WQ_1 * ZI / 2
                                         -1im * WQ_2 * IZ / 2)
 const NEGI_H1_TWOSPIN_ISO = get_mat_iso(-1im * 2π * XX)
+const NEGI_IX_TWOSPIN_ISO = get_mat_iso(-1im * 2π * IX)
+const NEGI_XI_TWOSPIN_ISO = get_mat_iso(-1im * 2π * XI)
 
 function J_eff(flux_c)
     return J_eff_spline_itp(flux_c)
@@ -296,8 +300,8 @@ function initialize_two_spin(model, gate_type, evolution_time, dt,
     u_min = fill(-Inf, m)
     u_min_boundary = fill(-Inf, m)
     # constrain the control amplitudes
-    x_max[model.controls_idx[1]] = 0.5
-    x_min[model.controls_idx[1]] = -0.5
+    x_max[model.controls_idx] .= 0.5
+    x_min[model.controls_idx] .= -0.5
     # control amplitudes go to zero at boundary
     x_max_boundary[model.controls_idx] .= 0
     x_min_boundary[model.controls_idx] .= 0
@@ -324,7 +328,7 @@ function initialize_two_spin(model, gate_type, evolution_time, dt,
     X0[1] .= x0
     if isnothing(initial_pulse)
         U0 = [V([
-            fill(1e-4, 1);
+            fill(1e-4, m);
             fill(dt, time_optimal ? 1 : 0);
         ]) for k = 1:N-1]
         ts = V(zeros(N))
