@@ -76,8 +76,8 @@ const XPIBY2_ = [1 -1im;
                 -1im 1] / sqrt(2)
 # Operators for two coupled spins
 
-const WQ_1 = 2π * 0.0072 #0.070
-const WQ_2 = 2π * 0.0085 #0.078
+const WQ_1 = 2π * 0.047 #0.070
+const WQ_2 = 2π * 0.060 #0.078
 
 const XX = kron(SIGMAX, SIGMAX)
 const ZZ = kron(SIGMAZ, SIGMAZ)
@@ -343,8 +343,9 @@ function initialize_two_spin(model, gate_type, evolution_time, dt,
     X0 = [V(zeros(n)) for k = 1:N]
     X0[1] .= x0
     if isnothing(initial_pulse)
+        control_count = time_optimal ? m - 1 : m
         U0 = [V([
-            fill(1e-4, m);
+            fill(1e-4, control_count);
             fill(dt, time_optimal ? 1 : 0);
         ]) for k = 1:N-1]
         ts = V(zeros(N))
