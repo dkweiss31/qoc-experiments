@@ -12,8 +12,6 @@ using Interpolations
 using Altro
 
 # paths
-const MM_OUT_PATH = abspath(joinpath(WDIR, "out", "mm"))
-
 chi_minus_df = CSV.read(joinpath(WDIR, "src/twospin/chi_minus_values.csv"), DataFrame, header=false)
 gs_minus_expect_df = CSV.read(joinpath(WDIR, "src/twospin/gs_minus_expect_values.csv"), DataFrame, header=false)
 J_eff_vals_df = CSV.read(joinpath(WDIR, "src/twospin/J_eff_values.csv"), DataFrame, header=false)
@@ -343,9 +341,8 @@ function initialize_two_spin(model, gate_type, evolution_time, dt,
     X0 = [V(zeros(n)) for k = 1:N]
     X0[1] .= x0
     if isnothing(initial_pulse)
-        control_count = time_optimal ? m - 1 : m
         U0 = [V([
-            fill(1e-4, control_count);
+            fill(1e-4, time_optimal ? m - 1 : m);
             fill(dt, time_optimal ? 1 : 0);
         ]) for k = 1:N-1]
         ts = V(zeros(N))
