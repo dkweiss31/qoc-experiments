@@ -21,6 +21,53 @@ gs_minus_expect_vals = Matrix{Float64}(gs_minus_expect_df)[:, 1]
 J_eff_vals = Matrix{Float64}(J_eff_vals_df)[:, 1]
 x_vals = Matrix{Float64}(x_vals_df)[:, 1]
 
+H_0_df = CSV.read(joinpath(WDIR, "src/twospin/H_0_np.csv"), DataFrame, header=false)
+
+H_a_r_df = CSV.read(joinpath(WDIR, "src/twospin/H_a_np_r.csv"), DataFrame, header=false)
+H_a_i_df = CSV.read(joinpath(WDIR, "src/twospin/H_a_np_i.csv"), DataFrame, header=false)
+
+H_b_r_df = CSV.read(joinpath(WDIR, "src/twospin/H_b_np_r.csv"), DataFrame, header=false)
+H_b_i_df = CSV.read(joinpath(WDIR, "src/twospin/H_b_np_i.csv"), DataFrame, header=false)
+
+H_c_lin_r_df = CSV.read(joinpath(WDIR, "src/twospin/H_c_lin_np_r.csv"), DataFrame, header=false)
+H_c_lin_i_df = CSV.read(joinpath(WDIR, "src/twospin/H_c_lin_np_i.csv"), DataFrame, header=false)
+
+H_c_cos_r_df = CSV.read(joinpath(WDIR, "src/twospin/H_c_cos_np_r.csv"), DataFrame, header=false)
+H_c_cos_i_df = CSV.read(joinpath(WDIR, "src/twospin/H_c_cos_np_i.csv"), DataFrame, header=false)
+
+H_c_sin_r_df = CSV.read(joinpath(WDIR, "src/twospin/H_c_sin_np_r.csv"), DataFrame, header=false)
+H_c_sin_i_df = CSV.read(joinpath(WDIR, "src/twospin/H_c_sin_np_i.csv"), DataFrame, header=false)
+
+const H_0 = Matrix{Float64}(H_0_df)
+# NOTE NAME CONFLICT
+const NEGI_H_0_TWOSPIN_ISO = get_mat_iso(-1im * H_0)
+
+const H_a_r = Matrix{Float64}(H_a_r_df)
+const H_a_i = Matrix{Float64}(H_a_i_df)
+const H_a = H_a_r + H_a_i .* 1im
+const NEGI_H_a_TWOSPIN_ISO = get_mat_iso(-1im * H_a)
+
+const H_b_r = Matrix{Float64}(H_b_r_df)
+const H_b_i = Matrix{Float64}(H_b_i_df)
+const H_b = H_b_r + H_b_i .* 1im
+const NEGI_H_b_TWOSPIN_ISO = get_mat_iso(-1im * H_b)
+
+const H_c_lin_r = Matrix{Float64}(H_c_lin_r_df)
+const H_c_lin_i = Matrix{Float64}(H_c_lin_i_df)
+const H_c_lin = H_c_lin_r + H_c_lin_i .* 1im
+const NEGI_H_c_lin_TWOSPIN_ISO = get_mat_iso(-1im * H_c_lin)
+
+const H_c_cos_r = Matrix{Float64}(H_c_cos_r_df)
+const H_c_cos_i = Matrix{Float64}(H_c_cos_i_df)
+const H_c_cos = H_c_cos_r + H_c_cos_i .* 1im
+const NEGI_H_c_cos_TWOSPIN_ISO = get_mat_iso(-1im * H_c_cos)
+
+const H_c_sin_r = Matrix{Float64}(H_c_sin_r_df)
+const H_c_sin_i = Matrix{Float64}(H_c_sin_i_df)
+const H_c_sin = H_c_sin_r + H_c_sin_i .* 1im
+const NEGI_H_c_sin_TWOSPIN_ISO = get_mat_iso(-1im * H_c_sin)
+
+
 J_eff_spline_itp = extrapolate(interpolate((x_vals,), J_eff_vals,
                                 Gridded(Linear())), Periodic())
 chi_minus_spline_itp = extrapolate(interpolate((x_vals,), chi_minus_vals,
@@ -314,8 +361,12 @@ function initialize_two_spin(model, gate_type, evolution_time, dt,
     u_min = fill(-Inf, m)
     u_min_boundary = fill(-Inf, m)
     # constrain the control amplitudes
-    x_max[model.controls_idx] .= 0.5
-    x_min[model.controls_idx] .= -0.5
+    x_max[model.controls_idx[1]] = 0.3
+    x_min[model.controls_idx[1]] = -0.3
+    x_max[model.controls_idx[2]] = 0.3
+    x_min[model.controls_idx[2]] = -0.3
+    x_max[model.controls_idx[3]] = 0.5
+    x_min[model.controls_idx[3]] = -0.5
     # control amplitudes go to zero at boundary
     x_max_boundary[model.controls_idx] .= 0
     x_min_boundary[model.controls_idx] .= 0
@@ -445,7 +496,8 @@ function post_process(solver, model, time_optimal, dt, ts, evolution_time, qs)
         "iterations" => iterations_,
         "time_optimal" => Integer(time_optimal),
         "hdim_iso" => HDIM_TWOSPIN_ISO,
-        "save_type" => Int(jl)
+        "save_type" => Int(jl),
+        "status" => "$(solver.stats.status)"
     )
     return result
 end
