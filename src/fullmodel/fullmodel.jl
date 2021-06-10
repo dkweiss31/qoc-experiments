@@ -74,7 +74,7 @@ end
 
 const DT_PREF = 1e-1
 
-const STATE_COUNT = 8
+const STATE_COUNT = size(H_0)[1]
 const STATE_COUNT_ISO = STATE_COUNT * 2
 
 # simulation constants
@@ -108,9 +108,9 @@ const CPHASE = [1 0 0 0;
                 0 0 0 -1]
 
 function enlarge_gate(gate)
-    enlargedim = STATE_COUNT - 4
-    [gate zeros((enlargedim, enlargedim));
-     zeros((enlargedim, enlargedim)) Matrix(1.0I, enlargedim, enlargedim)]
+    enlarged_gate = Matrix{Complex}(1.0I, STATE_COUNT, STATE_COUNT)
+    enlarged_gate[1:4, 1:4] = gate
+    return enlarged_gate
 end
 
 const sqrtiSWAPfull = enlarge_gate(sqrtiSWAP)
@@ -271,10 +271,6 @@ function post_process(solver, model, time_optimal, dt, ts, evolution_time, qs)
     acontrols_arr = permutedims(reduce(hcat, map(Array, acontrols_raw)), [2, 1])
     astates_raw = Altro.states(solver)
     astates_arr = permutedims(reduce(hcat, map(Array, astates_raw)), [2, 1])
-    state1_idx_arr = Array(model.state1_idx)
-    state2_idx_arr = Array(model.state2_idx)
-    state3_idx_arr = Array(model.state3_idx)
-    state4_idx_arr = Array(model.state4_idx)
     controls_idx_arr = Array(model.controls_idx)
     dcontrols_idx_arr = Array(model.dcontrols_idx)
     d2controls_idx_arr = Array(model.d2controls_idx)
@@ -290,10 +286,6 @@ function post_process(solver, model, time_optimal, dt, ts, evolution_time, qs)
         "astates" => astates_arr,
         "dt" => dt,
         "ts" => ts,
-        "state1_idx" => state1_idx_arr,
-        "state2_idx" => state2_idx_arr,
-        "state3_idx" => state3_idx_arr,
-        "state4_idx" => state4_idx_arr,
         "controls_idx" => controls_idx_arr,
         "dcontrols_idx" => dcontrols_idx_arr,
         "d2controls_idx" => d2controls_idx_arr,
@@ -304,7 +296,7 @@ function post_process(solver, model, time_optimal, dt, ts, evolution_time, qs)
         "qs" => qs,
         "iterations" => iterations_,
         "time_optimal" => Integer(time_optimal),
-        "hdim_iso" => HDIM_TWOSPIN_ISO,
+        "hdim_iso" => STATE_COUNT_ISO,
         "save_type" => Int(jl),
         "status" => "$(solver.stats.status)"
     )
