@@ -19,22 +19,23 @@ using Altro
 
 # paths
 pathtodatafiles = "src/fullmodel/"
-H_0_df = CSV.read(joinpath(WDIR, pathtodatafiles, "H_0_np.csv"), DataFrame, header=false)
+num_evals = "4"
+H_0_df = CSV.read(joinpath(WDIR, pathtodatafiles, num_evals*"H_0_np.csv"), DataFrame, header=false)
 
-H_a_r_df = CSV.read(joinpath(WDIR, pathtodatafiles, "H_a_np_r.csv"), DataFrame, header=false)
-H_a_i_df = CSV.read(joinpath(WDIR, pathtodatafiles, "H_a_np_i.csv"), DataFrame, header=false)
+H_a_r_df = CSV.read(joinpath(WDIR, pathtodatafiles, num_evals*"H_a_np_r.csv"), DataFrame, header=false)
+H_a_i_df = CSV.read(joinpath(WDIR, pathtodatafiles, num_evals*"H_a_np_i.csv"), DataFrame, header=false)
 
-H_b_r_df = CSV.read(joinpath(WDIR, pathtodatafiles, "H_b_np_r.csv"), DataFrame, header=false)
-H_b_i_df = CSV.read(joinpath(WDIR, pathtodatafiles, "H_b_np_i.csv"), DataFrame, header=false)
+H_b_r_df = CSV.read(joinpath(WDIR, pathtodatafiles, num_evals*"H_b_np_r.csv"), DataFrame, header=false)
+H_b_i_df = CSV.read(joinpath(WDIR, pathtodatafiles, num_evals*"H_b_np_i.csv"), DataFrame, header=false)
 
-H_c_lin_r_df = CSV.read(joinpath(WDIR, pathtodatafiles, "H_c_lin_np_r.csv"), DataFrame, header=false)
-H_c_lin_i_df = CSV.read(joinpath(WDIR, pathtodatafiles, "H_c_lin_np_i.csv"), DataFrame, header=false)
+H_c_lin_r_df = CSV.read(joinpath(WDIR, pathtodatafiles, num_evals*"H_c_lin_np_r.csv"), DataFrame, header=false)
+H_c_lin_i_df = CSV.read(joinpath(WDIR, pathtodatafiles, num_evals*"H_c_lin_np_i.csv"), DataFrame, header=false)
 
-H_c_cos_r_df = CSV.read(joinpath(WDIR, pathtodatafiles, "H_c_cos_np_r.csv"), DataFrame, header=false)
-H_c_cos_i_df = CSV.read(joinpath(WDIR, pathtodatafiles, "H_c_cos_np_i.csv"), DataFrame, header=false)
+H_c_cos_r_df = CSV.read(joinpath(WDIR, pathtodatafiles, num_evals*"H_c_cos_np_r.csv"), DataFrame, header=false)
+H_c_cos_i_df = CSV.read(joinpath(WDIR, pathtodatafiles, num_evals*"H_c_cos_np_i.csv"), DataFrame, header=false)
 
-H_c_sin_r_df = CSV.read(joinpath(WDIR, pathtodatafiles, "H_c_sin_np_r.csv"), DataFrame, header=false)
-H_c_sin_i_df = CSV.read(joinpath(WDIR, pathtodatafiles, "H_c_sin_np_i.csv"), DataFrame, header=false)
+H_c_sin_r_df = CSV.read(joinpath(WDIR, pathtodatafiles, num_evals*"H_c_sin_np_r.csv"), DataFrame, header=false)
+H_c_sin_i_df = CSV.read(joinpath(WDIR, pathtodatafiles, num_evals*"H_c_sin_np_i.csv"), DataFrame, header=false)
 
 const H_0 = Matrix{Float64}(H_0_df)
 const NEGI_H_0_TWOSPIN_ISO = get_mat_iso(-1im * H_0)
@@ -169,12 +170,8 @@ function initialize_full_model(model, gate_type, evolution_time, dt,
     u_min = fill(-Inf, m)
     u_min_boundary = fill(-Inf, m)
     # constrain the control amplitudes
-    x_max[model.controls_idx[1]] = 0.3
-    x_min[model.controls_idx[1]] = -0.3
-    x_max[model.controls_idx[2]] = 0.3
-    x_min[model.controls_idx[2]] = -0.3
-    x_max[model.controls_idx[3]] = 0.5
-    x_min[model.controls_idx[3]] = -0.5
+    x_max[model.controls_idx] .= 0.1
+    x_min[model.controls_idx] .= -0.1
     # control amplitudes go to zero at boundary
     x_max_boundary[model.controls_idx] .= 0
     x_min_boundary[model.controls_idx] .= 0
