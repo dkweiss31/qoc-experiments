@@ -5,7 +5,7 @@ qocexperiments.jl - A file for common things shared in this repository.
 # paths / venv
 WDIR = joinpath(@__DIR__, "../")
 import Pkg
-# Pkg.activate(WDIR)
+Pkg.activate(WDIR)
 
 # imports
 import Base
@@ -165,6 +165,18 @@ end
 
 @inline get_vec_iso(vec) = vcat(real(vec), imag(vec))
 
+
+function state_overlap_norm(ψ1, ψ2)
+    iso_length = length(ψ1)
+    num_states = Int(iso_length / 2)
+    real1 = ψ1[1:num_states]
+    imag1 = ψ1[num_states+1:end]
+    real2 = ψ2[1:num_states]
+    imag2 = ψ2[num_states+1:end]
+    realpart = Transpose(real1) * real2 + Transpose(imag1) * imag2
+    imagpart = Transpose(real1) * imag2 - Transpose(imag1) * real2
+    return realpart^2 + imagpart^2
+end
 
 function get_vec_uniso(vec)
     n = size(vec)[1]

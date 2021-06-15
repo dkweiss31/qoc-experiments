@@ -19,7 +19,7 @@ using Altro
 
 # paths
 pathtodatafiles = "src/fullmodel/"
-num_evals = "4"
+num_evals = "8"
 H_0_df = CSV.read(joinpath(WDIR, pathtodatafiles, num_evals*"H_0_np.csv"), DataFrame, header=false)
 
 H_a_r_df = CSV.read(joinpath(WDIR, pathtodatafiles, num_evals*"H_a_np_r.csv"), DataFrame, header=false)
@@ -77,6 +77,18 @@ const DT_PREF = 1e-1
 
 const STATE_COUNT = size(H_0)[1]
 const STATE_COUNT_ISO = STATE_COUNT * 2
+const FORBID_COUNT = STATE_COUNT - 4
+forbidden_states_list = zeros((STATE_COUNT - 4, STATE_COUNT_ISO))
+
+if FORBID_COUNT > 0
+    for state_idx in 1:STATE_COUNT - 4
+        forbid_state = fill(0.0, STATE_COUNT)
+        forbid_state[state_idx + 4] = 1.0
+        forbidden_states_list[state_idx, 1:end] = get_vec_iso(forbid_state)
+    end
+end
+
+const FORBIDDEN_STATES = forbidden_states_list
 
 # simulation constants
 
@@ -232,12 +244,15 @@ function initialize_full_model(model, gate_type, evolution_time, dt,
     if deriv_H1 == true
         Q[model.dstate1_H1_idx] .= qs[5]
     end
+    if FORBID_COUNT >= 1
+        Q[model.forbidden_idx] .= qs[6]
+    end
     Q = Diagonal(V(Q))
     Qf = Q .* N
     R = zeros(m)
-    R[model.d2controls_idx] .= qs[6]
+    R[model.d2controls_idx] .= qs[7]
     if time_optimal
-        R[model.dt_idx] .= qs[7]
+        R[model.dt_idx] .= qs[8]
     end
     R = Diagonal(V(R))
     objective = LQRObjective(Q, Qf, R, xf, n, m, N, M, V)
