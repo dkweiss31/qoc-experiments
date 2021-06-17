@@ -49,6 +49,8 @@ end
     xpi = 4
 end
 
+const DT_PREF = 1000.0/(384. * 16.)
+
 
 # methods
 function generate_file_path(extension, file_name, path)

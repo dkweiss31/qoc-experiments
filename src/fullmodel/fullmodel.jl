@@ -73,8 +73,6 @@ const NEGI_H_c_sin_TWOSPIN_ISO = get_mat_iso(-1im * H_c_sin)
     cphase = 4
 end
 
-const DT_PREF = 1e-1
-
 const STATE_COUNT = size(H_0)[1]
 const STATE_COUNT_ISO = STATE_COUNT * 2
 const FORBID_COUNT = STATE_COUNT - 4

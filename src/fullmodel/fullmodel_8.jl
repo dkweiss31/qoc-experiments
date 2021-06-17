@@ -108,6 +108,8 @@ function run_traj(;gate_type=iswap, evolution_time=50., dt=DT_PREF, verbose=true
                   ilqr_max_iterations=300,
                   initial_pulse=nothing)
     # model configuration
+    num_steps = floor(evolution_time / dt)
+    evolution_time = num_steps * dt
     Hs = [M(H) for H in (NEGI_H_0_TWOSPIN_ISO, NEGI_H_a_TWOSPIN_ISO,
                          NEGI_H_b_TWOSPIN_ISO, NEGI_H_c_lin_TWOSPIN_ISO,
                          NEGI_H_c_cos_TWOSPIN_ISO, NEGI_H_c_sin_TWOSPIN_ISO)]
