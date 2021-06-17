@@ -10,6 +10,7 @@ using DataFrames
 using LinearAlgebra
 using Interpolations
 using Altro
+using FFTW
 
 @inline Base.size(model::AbstractModel) = model.n, model.m
 # vector and matrix constructors (use CPU arrays)
@@ -20,7 +21,7 @@ using Altro
 # paths
 
 pathtodatafiles = "src/fluxonium/"
-num_evals = "2"
+num_evals = "4"
 
 H_0_df = CSV.read(joinpath(WDIR, pathtodatafiles, num_evals*"H_0_np.csv"), DataFrame, header=false)
 
@@ -41,8 +42,6 @@ const NEGI_H_CONT_FLUXONIUM_ISO = get_mat_iso(-1im * π * H_cont)
     ypiby2 = 2
     zpiby2 = 3
 end
-
-const DT_PREF = 1e-1
 
 const STATE_COUNT = size(H_0)[1]
 const STATE_COUNT_ISO = STATE_COUNT * 2
@@ -88,6 +87,18 @@ function enlarge_gate(gate)
     enlarged_gate = Matrix{Complex}(1.0I, STATE_COUNT, STATE_COUNT)
     enlarged_gate[1:2, 1:2] = gate
     return enlarged_gate
+end
+
+function bandpass_filter(controls, dt, cutoff_freq=1.8)
+    control_eval_count = length(controls)
+    half_control_eval_count = Int(control_eval_count / 2)
+    controls_f = fft(controls)
+    x_controls_f = fftfreq(control_eval_count, dt^(-1))
+    idx = findmin(broadcast(abs, x_controls_f - fill(cutoff_freq, control_eval_count)))
+    controls_f[idx[2]:half_control_eval_count] .= 0.0
+    controls_f[half_control_eval_count + idx[2]:end] .= 0.0
+    newcontrols = ifft(controls_f)
+    return newcontrols
 end
 
 const SIGMAXFULL = enlarge_gate(SIGMAX)
@@ -147,8 +158,8 @@ function initialize_fluxonium(model, gate_type, evolution_time, dt,
     u_min = fill(-Inf, m)
     u_min_boundary = fill(-Inf, m)
     # constrain the control amplitudes
-    x_max[model.controls_idx] .= 0.1
-    x_min[model.controls_idx] .= -0.1
+    x_max[model.controls_idx] .= 1.0
+    x_min[model.controls_idx] .= -1.0
     # control amplitudes go to zero at boundary
     x_max_boundary[model.controls_idx] .= 0
     x_min_boundary[model.controls_idx] .= 0
@@ -204,8 +215,9 @@ function initialize_fluxonium(model, gate_type, evolution_time, dt,
     Q[model.controls_idx] .= qs[3]
     Q[model.dcontrols_idx] .= qs[4]
     if deriv_H0 == true
-        Q[model.dstate1_H0_idx] .= qs[5]
+        Q[model.dstate1_idx] .= qs[5]
     end
+    # Not currently functional
     if deriv_H1 == true
         Q[model.dstate1_H1_idx] .= qs[5]
     end
@@ -227,7 +239,8 @@ function initialize_fluxonium(model, gate_type, evolution_time, dt,
     control_amp_boundary = BoundConstraint(x_max_boundary, x_min_boundary,
                                            u_max_boundary, u_min_boundary, n, m, M, V)
     target_astate_constraint = GoalConstraint(xf, V([model.state_idxs[1];
-                                                     model.state_idxs[2];]),
+                                                     model.state_idxs[2];
+                                                     model.intcontrols_idx]),
                                               n, m, M, V)
     nc_states = [NormConstraint(EQUALITY, STATE, nidx,
                                   1., n, m, M, V)
