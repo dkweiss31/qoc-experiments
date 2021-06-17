@@ -260,7 +260,8 @@ function initialize_full_model(model, gate_type, evolution_time, dt,
     control_amp_boundary = BoundConstraint(x_max_boundary, x_min_boundary,
                                            u_max_boundary, u_min_boundary, n, m, M, V)
     target_astate_constraint = GoalConstraint(xf, V([model.state_idxs[1]; model.state_idxs[2];
-                                                     model.state_idxs[3]; model.state_idxs[4];]),
+                                                     model.state_idxs[3]; model.state_idxs[4];
+                                                     model.intcontrols_idx]),
                                               n, m, M, V)
     nc_states = [NormConstraint(EQUALITY, STATE, nidx,
                                   1., n, m, M, V)
