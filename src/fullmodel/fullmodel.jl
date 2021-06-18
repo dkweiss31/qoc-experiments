@@ -71,6 +71,7 @@ const NEGI_H_c_sin_TWOSPIN_ISO = get_mat_iso(-1im * H_c_sin)
     iswap = 2
     sqrtiswap = 3
     cphase = 4
+    xx = 5
 end
 
 const STATE_COUNT = size(H_0)[1]
@@ -117,6 +118,10 @@ const CPHASE = [1 0 0 0;
                 0 1 0 0;
                 0 0 1 0;
                 0 0 0 -1]
+const XX = [0 0 0 1;
+            0 0 1 0;
+            0 1 0 0;
+            1 0 0 0]
 
 function enlarge_gate(gate)
     enlarged_gate = Matrix{Complex}(1.0I, STATE_COUNT, STATE_COUNT)
@@ -128,12 +133,14 @@ const sqrtiSWAPfull = enlarge_gate(sqrtiSWAP)
 const iSWAPfull = enlarge_gate(iSWAP)
 const CNOTfull = enlarge_gate(CNOT)
 const CPHASEfull = enlarge_gate(CPHASE)
+const XXfull = enlarge_gate(XX)
 
 const TARGET_DICT = Dict(
             iswap => iSWAPfull,
             sqrtiswap => sqrtiSWAPfull,
             cnot => CNOTfull,
-            cphase => CPHASEfull
+            cphase => CPHASEfull,
+            xx => XXfull
 )
 
 function target_states(gate_type)
