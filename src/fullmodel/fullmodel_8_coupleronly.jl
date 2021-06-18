@@ -11,7 +11,7 @@ using LinearAlgebra
 using StaticArrays
 
 # paths
-const EXPERIMENT_NAME = "fullmodel8"
+const EXPERIMENT_NAME = "fullmodel8coupleronly"
 const SAVE_PATH = abspath(joinpath(WDIR, "out", EXPERIMENT_META, EXPERIMENT_NAME))
 
 struct Model{TH,Tis,Tic,Tid,Tif} <: AbstractModel
@@ -33,7 +33,7 @@ end
 
 function Model(M_, Md_, V_, Hs, time_optimal)
     # problem size
-    control_count = 3
+    control_count = 1
     state_count = STATE_COUNT
     forbid_count = FORBID_COUNT
     n = state_count * STATE_COUNT_ISO + 3 * control_count + forbid_count
@@ -70,11 +70,9 @@ function Altro.discrete_dynamics(::Type{EXP}, model::Model,
                               acontrol::AbstractVector, time::Real, dt_::Real)
     dt = !model.time_optimal ? dt_ : acontrol[model.dt_idx[1]]^2
     H = dt * (model.Hs[1]
-            + 2π * astate[model.controls_idx[1]] * model.Hs[2]
-            + 2π * astate[model.controls_idx[2]] * model.Hs[3]
-            + 2π * 0.5 * astate[model.controls_idx[3]] * model.Hs[4]
-            + (cos(2π * 0.5 * astate[model.controls_idx[3]]) - 1.0) * model.Hs[5]
-            + sin(2π * 0.5 * astate[model.controls_idx[3]]) * model.Hs[6]
+            + 2π * 0.5 * astate[model.controls_idx[1]] * model.Hs[2]
+            + (cos(2π * 0.5 * astate[model.controls_idx[1]]) - 1.0) * model.Hs[3]
+            + sin(2π * 0.5 * astate[model.controls_idx[1]]) * model.Hs[4]
             )
     U = exp(H)
     astate_ = []
@@ -110,8 +108,7 @@ function run_traj(;gate_type=iswap, evolution_time=50., dt=DT_PREF, verbose=true
     # model configuration
     num_steps = floor(evolution_time / dt)
     evolution_time = num_steps * dt
-    Hs = [M(H) for H in (NEGI_H_0_TWOSPIN_ISO, NEGI_H_a_TWOSPIN_ISO,
-                         NEGI_H_b_TWOSPIN_ISO, NEGI_H_c_lin_TWOSPIN_ISO,
+    Hs = [M(H) for H in (NEGI_H_0_TWOSPIN_ISO, NEGI_H_c_lin_TWOSPIN_ISO,
                          NEGI_H_c_cos_TWOSPIN_ISO, NEGI_H_c_sin_TWOSPIN_ISO)]
     model = Model(M, Md, V, Hs, time_optimal)
     objective, constraints, X0, U0, ts, N = initialize_full_model(model, gate_type, evolution_time, dt,

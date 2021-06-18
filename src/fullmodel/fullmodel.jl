@@ -19,7 +19,7 @@ using Altro
 
 # paths
 pathtodatafiles = "src/fullmodel/"
-num_evals = "8"
+num_evals = "4"
 H_0_df = CSV.read(joinpath(WDIR, pathtodatafiles, num_evals*"H_0_np.csv"), DataFrame, header=false)
 
 H_a_r_df = CSV.read(joinpath(WDIR, pathtodatafiles, num_evals*"H_a_np_r.csv"), DataFrame, header=false)
@@ -180,8 +180,8 @@ function initialize_full_model(model, gate_type, evolution_time, dt,
     u_min = fill(-Inf, m)
     u_min_boundary = fill(-Inf, m)
     # constrain the control amplitudes
-    x_max[model.controls_idx] .= 0.1
-    x_min[model.controls_idx] .= -0.1
+    x_max[model.controls_idx] .= 0.5
+    x_min[model.controls_idx] .= -0.5
     # control amplitudes go to zero at boundary
     x_max_boundary[model.controls_idx] .= 0
     x_min_boundary[model.controls_idx] .= 0
