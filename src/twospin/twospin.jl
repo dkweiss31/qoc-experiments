@@ -245,15 +245,15 @@ const IZPIBY2_ISO_2 = get_vec_iso(IZPIBY2_[:,2])
 const IZPIBY2_ISO_3 = get_vec_iso(IZPIBY2_[:,3])
 const IZPIBY2_ISO_4 = get_vec_iso(IZPIBY2_[:,4])
 
-const XX_ISO_1 = get_vec_iso(XX_ISO[:,1])
-const XX_ISO_2 = get_vec_iso(XX_ISO[:,2])
-const XX_ISO_3 = get_vec_iso(XX_ISO[:,3])
-const XX_ISO_4 = get_vec_iso(XX_ISO[:,4])
+const XX_ISO_1 = get_vec_iso(XX[:,1])
+const XX_ISO_2 = get_vec_iso(XX[:,2])
+const XX_ISO_3 = get_vec_iso(XX[:,3])
+const XX_ISO_4 = get_vec_iso(XX[:,4])
 
-const YY_ISO_1 = get_vec_iso(YY_ISO[:,1])
-const YY_ISO_2 = get_vec_iso(YY_ISO[:,2])
-const YY_ISO_3 = get_vec_iso(YY_ISO[:,3])
-const YY_ISO_4 = get_vec_iso(YY_ISO[:,4])
+const YY_ISO_1 = get_vec_iso(YY[:,1])
+const YY_ISO_2 = get_vec_iso(YY[:,2])
+const YY_ISO_3 = get_vec_iso(YY[:,3])
+const YY_ISO_4 = get_vec_iso(YY[:,4])
 
 function target_states(gate_type)
     if gate_type == cnot
