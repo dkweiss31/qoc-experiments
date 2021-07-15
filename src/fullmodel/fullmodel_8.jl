@@ -35,8 +35,8 @@ function Model(M_, Md_, V_, Hs, time_optimal)
     # problem size
     control_count = 3
     state_count = STATE_COUNT
-    forbid_count = FORBID_COUNT
-    n = state_count * STATE_COUNT_ISO + 3 * control_count + forbid_count
+    add_forbid = FORBID_COUNT > 0 ? 4 : 0
+    n = (state_count * STATE_COUNT_ISO + 3 * control_count + add_forbid)
     m = time_optimal ? control_count + 1 : control_count
     # state indices
     state_idxs = [V(STATE_COUNT_ISO * (state_idx - 1)
@@ -45,7 +45,7 @@ function Model(M_, Md_, V_, Hs, time_optimal)
     intcontrols_idx = V(state_idxs[end][end] + 1:state_idxs[end][end] + control_count)
     controls_idx = V(intcontrols_idx[end] + 1:intcontrols_idx[end] + control_count)
     dcontrols_idx = V(controls_idx[end] + 1:controls_idx[end] + control_count)
-    forbidden_idx = V(dcontrols_idx[end] + 1:dcontrols_idx[end] + forbid_count)
+    forbidden_idx = V(dcontrols_idx[end] + 1:dcontrols_idx[end] + add_forbid)
     # control indices
     d2controls_idx = V(1:control_count)
     dt_idx = V(d2controls_idx[end] + 1:d2controls_idx[end] + 1)
