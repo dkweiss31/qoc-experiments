@@ -104,6 +104,8 @@ const PAULI_IDENTITY = [1 0;
                         0 1]
 const SIGMAX = [0 1;
                 1 0]
+const SIGMAY = [0 -1im;
+                1im 0]
 const SIGMAZ = [1 0;
                 0 -1]
 const ZPIBY2_ = [1-1im 0;
@@ -118,6 +120,7 @@ const WQ_1 = 2π * 0.037 #0.070
 const WQ_2 = 2π * 0.047 #0.078
 
 const XX = kron(SIGMAX, SIGMAX)
+const YY = kron(SIGMAY, SIGMAY)
 const ZZ = kron(SIGMAZ, SIGMAZ)
 const IZ = kron(PAULI_IDENTITY, SIGMAZ)
 const ZI = kron(SIGMAZ, PAULI_IDENTITY)
@@ -142,6 +145,7 @@ const CPHASE = [1 0 0 0;
                 0 0 0 -1]
 
 const XX_ISO = get_mat_iso(XX)
+const YY_ISO = get_mat_iso(XX)
 const ZZ_ISO = get_mat_iso(ZZ)
 const IZ_ISO = get_mat_iso(IZ)
 const ZI_ISO = get_mat_iso(ZI)
@@ -241,6 +245,16 @@ const IZPIBY2_ISO_2 = get_vec_iso(IZPIBY2_[:,2])
 const IZPIBY2_ISO_3 = get_vec_iso(IZPIBY2_[:,3])
 const IZPIBY2_ISO_4 = get_vec_iso(IZPIBY2_[:,4])
 
+const XX_ISO_1 = get_vec_iso(XX_ISO[:,1])
+const XX_ISO_2 = get_vec_iso(XX_ISO[:,2])
+const XX_ISO_3 = get_vec_iso(XX_ISO[:,3])
+const XX_ISO_4 = get_vec_iso(XX_ISO[:,4])
+
+const YY_ISO_1 = get_vec_iso(YY_ISO[:,1])
+const YY_ISO_2 = get_vec_iso(YY_ISO[:,2])
+const YY_ISO_3 = get_vec_iso(YY_ISO[:,3])
+const YY_ISO_4 = get_vec_iso(YY_ISO[:,4])
+
 function target_states(gate_type)
     if gate_type == cnot
         target_state1 = CNOT_ISO_1
@@ -263,15 +277,15 @@ function target_states(gate_type)
         target_state3 = CPHASE_ISO_3
         target_state4 = CPHASE_ISO_4
     elseif gate_type == yy
-        target_state1 = YYPIBY2_ISO_1
-        target_state2 = YYPIBY2_ISO_2
-        target_state3 = YYPIBY2_ISO_3
-        target_state4 = YYPIBY2_ISO_4
+        target_state1 = YY_ISO_1
+        target_state2 = YY_ISO_2
+        target_state3 = YY_ISO_3
+        target_state4 = YY_ISO_4
     elseif gate_type == xx
-        target_state1 = XXPIBY2_ISO_1
-        target_state2 = XXPIBY2_ISO_2
-        target_state3 = XXPIBY2_ISO_3
-        target_state4 = XXPIBY2_ISO_4
+        target_state1 = XX_ISO_1
+        target_state2 = XX_ISO_2
+        target_state3 = XX_ISO_3
+        target_state4 = XX_ISO_4
     end
     return (target_state1, target_state2, target_state3, target_state4)
 end
