@@ -145,7 +145,7 @@ const CPHASE = [1 0 0 0;
                 0 0 0 -1]
 
 const XX_ISO = get_mat_iso(XX)
-const YY_ISO = get_mat_iso(XX)
+const YY_ISO = get_mat_iso(YY)
 const ZZ_ISO = get_mat_iso(ZZ)
 const IZ_ISO = get_mat_iso(IZ)
 const ZI_ISO = get_mat_iso(ZI)
