@@ -69,8 +69,7 @@ function Altro.discrete_dynamics(::Type{EXP}, model::Model,
                               astate::AbstractVector,
                               acontrol::AbstractVector, time::Real, dt_::Real)
     dt = !model.time_optimal ? dt_ : acontrol[model.dt_idx[1]]^2
-    H = dt * (model.Hs[1] +
-              J_eff(astate[model.controls_idx[1]]+0.28) * model.Hs[2])
+    H = dt * (model.Hs[1] + 2.0 * π * astate[model.controls_idx[1]] * model.Hs[2])
     U = exp(H)
     state1 = U * astate[model.state1_idx]
     state2 = U * astate[model.state2_idx]
@@ -88,6 +87,7 @@ function run_traj(;gate_type=iswap, evolution_time=50., dt=DT_PREF, verbose=true
                   time_optimal=false, qs=[1e0, 1e-1, 1e-1, 1e-1, 5e-2, 1e-1, 1e-1], smoke_test=false,
                   save=true, max_iterations=10000, bp_reg_fp=10.,
                   dJ_counter_limit=20, bp_reg_type=:control, projected_newton=true,
+                  ilqr_max_iterations=300,
                   initial_pulse=nothing)
     # model configuration
     Hs = [M(H) for H in (NEGI_H0_TWOSPIN_ISO, NEGI_H1_TWOSPIN_ISO)]
@@ -98,10 +98,11 @@ function run_traj(;gate_type=iswap, evolution_time=50., dt=DT_PREF, verbose=true
     prob = Problem(EXP, model, objective, constraints, X0, U0, ts, N, M, Md, V)
     opts = SolverOptions(
         verbose_pn=verbose ? true : false, verbose=verbose ? 2 : 0,
-        ilqr_max_iterations=smoke_test ? 1 : 300,
-        al_max_iterations=smoke_test ? 1 : 30, n_steps=smoke_test ? 1 : 2, iterations=max_iterations,
-        bp_reg_fp=bp_reg_fp, dJ_counter_limit=dJ_counter_limit, bp_reg_type=bp_reg_type,
-        projected_newton=projected_newton,
+        ilqr_max_iterations=smoke_test ? 1 : ilqr_max_iterations,
+        al_max_iterations=smoke_test ? 1 : 30, n_steps=smoke_test ? 1 : 2,
+        iterations=max_iterations, bp_reg_fp=bp_reg_fp,
+        dJ_counter_limit=dJ_counter_limit, bp_reg_type=bp_reg_type,
+        projected_newton=projected_newton
     )
     # solve
     solver = ALTROSolver(prob, opts)

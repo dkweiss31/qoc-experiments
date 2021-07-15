@@ -79,19 +79,12 @@ const ELb = 0.268
 
 # types
 @enum GateType begin
-    zzpiby2 = 1
-    yypiby2 = 2
-    xxpiby2 = 3
-    xipiby2 = 4
-    ixpiby2 = 5
-    yipiby2 = 6
-    iypiby2 = 7
-    zipiby2 = 8
-    izpiby2 = 9
-    cnot = 10
-    iswap = 11
-    sqrtiswap = 12
-    cphase = 13
+    cnot = 1
+    iswap = 2
+    sqrtiswap = 3
+    cphase = 4
+    yy = 5
+    xx = 6
 end
 
 # simulation constants
@@ -121,8 +114,8 @@ const XPIBY2_ = [1 -1im;
                 -1im 1] / sqrt(2)
 # Operators for two coupled spins
 
-const WQ_1 = 2π * 0.047 #0.070
-const WQ_2 = 2π * 0.060 #0.078
+const WQ_1 = 2π * 0.037 #0.070
+const WQ_2 = 2π * 0.047 #0.078
 
 const XX = kron(SIGMAX, SIGMAX)
 const ZZ = kron(SIGMAZ, SIGMAZ)
@@ -249,52 +242,7 @@ const IZPIBY2_ISO_3 = get_vec_iso(IZPIBY2_[:,3])
 const IZPIBY2_ISO_4 = get_vec_iso(IZPIBY2_[:,4])
 
 function target_states(gate_type)
-    if gate_type == xxpiby2
-        target_state1 = XXPIBY2_ISO_1
-        target_state2 = XXPIBY2_ISO_2
-        target_state3 = XXPIBY2_ISO_3
-        target_state4 = XXPIBY2_ISO_4
-    elseif gate_type == yypiby2
-        target_state1 = YYPIBY2_ISO_1
-        target_state2 = YYPIBY2_ISO_2
-        target_state3 = YYPIBY2_ISO_3
-        target_state4 = YYPIBY2_ISO_4
-    elseif gate_type == zzpiby2
-        target_state1 = ZZPIBY2_ISO_1
-        target_state2 = ZZPIBY2_ISO_2
-        target_state3 = ZZPIBY2_ISO_3
-        target_state4 = ZZPIBY2_ISO_4
-    elseif gate_type == xipiby2
-        target_state1 = XIPIBY2_ISO_1
-        target_state2 = XIPIBY2_ISO_2
-        target_state3 = XIPIBY2_ISO_3
-        target_state4 = XIPIBY2_ISO_4
-    elseif gate_type == ixpiby2
-        target_state1 = IXPIBY2_ISO_1
-        target_state2 = IXPIBY2_ISO_2
-        target_state3 = IXPIBY2_ISO_3
-        target_state4 = IXPIBY2_ISO_4
-    elseif gate_type == yipiby2
-        target_state1 = YIPIBY2_ISO_1
-        target_state2 = YIPIBY2_ISO_2
-        target_state3 = YIPIBY2_ISO_3
-        target_state4 = YIPIBY2_ISO_4
-    elseif gate_type == iypiby2
-        target_state1 = IYPIBY2_ISO_1
-        target_state2 = IYPIBY2_ISO_2
-        target_state3 = IYPIBY2_ISO_3
-        target_state4 = IYPIBY2_ISO_4
-    elseif gate_type == zipiby2
-        target_state1 = ZIPIBY2_ISO_1
-        target_state2 = ZIPIBY2_ISO_2
-        target_state3 = ZIPIBY2_ISO_3
-        target_state4 = ZIPIBY2_ISO_4
-    elseif gate_type == izpiby2
-        target_state1 = IZPIBY2_ISO_1
-        target_state2 = IZPIBY2_ISO_2
-        target_state3 = IZPIBY2_ISO_3
-        target_state4 = IZPIBY2_ISO_4
-    elseif gate_type == cnot
+    if gate_type == cnot
         target_state1 = CNOT_ISO_1
         target_state2 = CNOT_ISO_2
         target_state3 = CNOT_ISO_3
@@ -314,6 +262,16 @@ function target_states(gate_type)
         target_state2 = CPHASE_ISO_2
         target_state3 = CPHASE_ISO_3
         target_state4 = CPHASE_ISO_4
+    elseif gate_type == yy
+        target_state1 = YYPIBY2_ISO_1
+        target_state2 = YYPIBY2_ISO_2
+        target_state3 = YYPIBY2_ISO_3
+        target_state4 = YYPIBY2_ISO_4
+    elseif gate_type == xx
+        target_state1 = XXPIBY2_ISO_1
+        target_state2 = XXPIBY2_ISO_2
+        target_state3 = XXPIBY2_ISO_3
+        target_state4 = XXPIBY2_ISO_4
     end
     return (target_state1, target_state2, target_state3, target_state4)
 end
@@ -363,10 +321,10 @@ function initialize_two_spin(model, gate_type, evolution_time, dt,
     # constrain the control amplitudes
     x_max[model.controls_idx[1]] = 0.3
     x_min[model.controls_idx[1]] = -0.3
-    x_max[model.controls_idx[2]] = 0.3
-    x_min[model.controls_idx[2]] = -0.3
-    x_max[model.controls_idx[3]] = 0.5
-    x_min[model.controls_idx[3]] = -0.5
+    # x_max[model.controls_idx[2]] = 0.3
+    # x_min[model.controls_idx[2]] = -0.3
+    # x_max[model.controls_idx[3]] = 0.5
+    # x_min[model.controls_idx[3]] = -0.5
     # control amplitudes go to zero at boundary
     x_max_boundary[model.controls_idx] .= 0
     x_min_boundary[model.controls_idx] .= 0
