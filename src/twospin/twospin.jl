@@ -398,7 +398,8 @@ function initialize_two_spin(model, gate_type, evolution_time, dt,
     control_amp_boundary = BoundConstraint(x_max_boundary, x_min_boundary,
                                            u_max_boundary, u_min_boundary, n, m, M, V)
     target_astate_constraint = GoalConstraint(xf, V([model.state1_idx; model.state2_idx;
-                                                     model.state3_idx; model.state4_idx;]),
+                                                     model.state3_idx; model.state4_idx;
+                                                     model.intcontrols_idx]),
                                               n, m, M, V)
     nidxs = [model.state1_idx, model.state2_idx,
              model.state3_idx, model.state4_idx]
